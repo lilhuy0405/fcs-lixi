@@ -27,12 +27,17 @@ function App() {
   const [prize, setPrize] = useState<any>(null)
   const columns = [
     {
+      title: 'STT',
+      dataIndex: 'stt',
+      key: 'key',
+    },
+    {
       title: 'Tên',
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: 'Lì xì',
+      title: 'Bú',
       dataIndex: 'prize',
     }
   ]
@@ -69,8 +74,9 @@ function App() {
       })
       if (!prizesResp.ok) return
       const prizesData = await prizesResp.json()
-      setData(prizesData.map((user: any) => ({
+      setData(prizesData.map((user: any, index: number) => ({
         key: user.id,
+        stt: index + 1,
         name: user?.telegramUsername ?? (user?.telegramFirstName + " " + user?.telegramLastName),
         prize: user.prize
       })))
@@ -90,6 +96,9 @@ function App() {
       </div>
       <h4 style={{textAlign: 'center'}}>
         {timeToMidnight.hours}H:{timeToMidnight.minutes}M:{timeToMidnight.seconds}S
+      </h4>
+      <h4 style={{textAlign: 'center'}}>
+        Còn {50 - data.length} bao lì xì không nhanh thì hết nhé các cháu ơi
       </h4>
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         <Button type='primary' size='large' onClick={async () => {
@@ -137,6 +146,7 @@ function App() {
         columns={columns}
         dataSource={data}
         pagination={false}
+        scroll={{y: 500, x: 'max-content'}}
       />
 
 
