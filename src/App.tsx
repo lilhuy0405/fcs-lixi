@@ -15,6 +15,7 @@ function App() {
       const now = new Date()
       const midnight = new Date(2025, 0, 29, 0, 0, 0)
       setTimeToMidnight({
+        times: midnight.getTime() - now.getTime(),
         hours: Math.floor((midnight.getTime() - now.getTime()) / 1000 / 60 / 60),
         minutes: Math.floor(((midnight.getTime() - now.getTime()) / 1000 / 60) % 60),
         seconds: Math.floor(((midnight.getTime() - now.getTime()) / 1000) % 60),
@@ -56,27 +57,29 @@ function App() {
     login().then()
   }, []);
 
-  useEffect(() => {
-    const fetchPrizes = async () => {
-      try {
-        const token = window.localStorage.getItem('token')
-        if (!token) return
-        const prizesResp = await fetch('https://lixi-be.fcs.ninja/api/auth/prized-users', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-        if (!prizesResp.ok) return
-        const prizesData = await prizesResp.json()
-        setData(prizesData.map((user: any) => ({
-          key: user.id,
-          name: user?.telegramUsername,
-          prize: user.prize
-        })))
-      } catch (err) {
-        console.log(err)
-      }
+  const fetchPrizes = async () => {
+    try {
+      const token = window.localStorage.getItem('token')
+      if (!token) return
+      const prizesResp = await fetch('https://lixi-be.fcs.ninja/api/auth/prized-users', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      if (!prizesResp.ok) return
+      const prizesData = await prizesResp.json()
+      setData(prizesData.map((user: any) => ({
+        key: user.id,
+        name: user?.telegramUsername ?? (user?.telegramFirstName + " " + user?.telegramLastName),
+        prize: user.prize
+      })))
+    } catch (err) {
+      console.log(err)
     }
+  }
+
+  useEffect(() => {
+
     fetchPrizes().then()
   }, []);
 
@@ -91,6 +94,10 @@ function App() {
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         <Button type='primary' size='large' onClick={async () => {
           try {
+            if (timeToMidnight.times > 0) {
+              alert('Chưa đến thời gian nhận lì xì nhé')
+              return
+            }
             const token = window.localStorage.getItem('token')
             if (!token) return
             const prizeResp = await fetch('https://lixi-be.fcs.ninja/api/auth/random-prize', {
@@ -98,12 +105,18 @@ function App() {
                 Authorization: `Bearer ${token}`
               }
             })
-            if (!prizeResp.ok) return
-            const prizeData = await prizeResp.json()
+            if (!prizeResp.ok) {
+              alert('Lỗi hoặc là cháu đã nhận lì xì rồi tham vừa thôi nhé')
+              return
+            }
+            const prizeData = await prizeResp.text()
+            console.log(prizeData)
             setPrize(prizeData)
           } catch (err) {
             console.log(err)
             alert('Lỗi hoặc là  cháu đã nhận lì xì rồi tham vừa thôi nhé')
+          } finally {
+            await fetchPrizes()
           }
         }}>Nhận lì xì</Button>
       </div>
@@ -114,7 +127,7 @@ function App() {
               <h3 style={{textAlign: 'center'}}>Chúc mừng cháu được: </h3>
             </div>
             <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-              <Image src={`${prize}.jpeg`} preview={false}/>
+              <Image src={`/${prize}.jpeg`} preview={false}/>
             </div>
           </>
         )
