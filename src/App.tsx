@@ -1,5 +1,6 @@
 import {useEffect, useState} from "react";
 import {Button, Image, Table} from "antd";
+import toast from "react-hot-toast";
 //@ts-ignore
 window.Telegram.WebApp.disableVerticalSwipes();
 //@ts-ignore
@@ -79,7 +80,6 @@ function App() {
   }
 
   useEffect(() => {
-
     fetchPrizes().then()
   }, []);
 
@@ -94,10 +94,10 @@ function App() {
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         <Button type='primary' size='large' onClick={async () => {
           try {
-            if (timeToMidnight.times > 0) {
-              alert('Chưa đến thời gian nhận lì xì nhé')
-              return
-            }
+            // if (timeToMidnight.times > 0) {
+            //   toast.error('Chưa đến thời gian nhận lì xì nhé')
+            //   return
+            // }
             const token = window.localStorage.getItem('token')
             if (!token) return
             const prizeResp = await fetch('https://lixi-be.fcs.ninja/api/auth/random-prize', {
@@ -106,15 +106,15 @@ function App() {
               }
             })
             if (!prizeResp.ok) {
-              alert('Lỗi hoặc là cháu đã nhận lì xì rồi tham vừa thôi nhé')
+              toast.error('Lỗi hoặc là cháu đã nhận lì xì rồi tham vừa thôi nhé')
               return
             }
             const prizeData = await prizeResp.text()
             console.log(prizeData)
-            setPrize(prizeData)
+            setPrize(prizeData.trim())
           } catch (err) {
             console.log(err)
-            alert('Lỗi hoặc là  cháu đã nhận lì xì rồi tham vừa thôi nhé')
+            toast.error('Lỗi hoặc là  cháu đã nhận lì xì rồi tham vừa thôi nhé')
           } finally {
             await fetchPrizes()
           }
