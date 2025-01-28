@@ -1,6 +1,9 @@
 import {useEffect, useState} from "react";
 import {Button, Image, Table} from "antd";
-
+//@ts-ignore
+window.Telegram.WebApp.disableVerticalSwipes();
+//@ts-ignore
+window.Telegram.WebApp.expand();
 
 function App() {
   const [timeToMidnight, setTimeToMidnight] = useState<any>({
@@ -19,6 +22,7 @@ function App() {
     }, 1000)
     return () => clearInterval(interval)
   }, [])
+  const [prize, setPrize] = useState<any>(null)
   const columns = [
     {
       title: 'Tên',
@@ -30,7 +34,51 @@ function App() {
       dataIndex: 'prize',
     }
   ]
-  const data: any = []
+  const [data, setData] = useState<any>([])
+
+  const login = async () => {
+    try {
+      // @ts-ignore
+      const initData = window.Telegram.WebApp.initData
+      if (!initData) return
+      const loginResp = await fetch('https://lixi-be.fcs.ninja/api/auth/login?' + initData)
+      if (!loginResp.ok) return
+      const loginData = await loginResp.json()
+      const token = loginData.accessToken
+      window.localStorage.setItem('token', token)
+      console.log(token)
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  useEffect(() => {
+    login().then()
+  }, []);
+
+  useEffect(() => {
+    const fetchPrizes = async () => {
+      try {
+        const token = window.localStorage.getItem('token')
+        if (!token) return
+        const prizesResp = await fetch('https://lixi-be.fcs.ninja/api/auth/prized-users', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        if (!prizesResp.ok) return
+        const prizesData = await prizesResp.json()
+        setData(prizesData.map((user: any) => ({
+          key: user.id,
+          name: user?.telegramUsername,
+          prize: user.prize
+        })))
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    fetchPrizes().then()
+  }, []);
 
   return (
     <>
@@ -41,14 +89,36 @@ function App() {
         {timeToMidnight.hours}H:{timeToMidnight.minutes}M:{timeToMidnight.seconds}S
       </h4>
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <Button type='primary' size='large'>Nhận lì xì</Button>
+        <Button type='primary' size='large' onClick={async () => {
+          try {
+            const token = window.localStorage.getItem('token')
+            if (!token) return
+            const prizeResp = await fetch('https://lixi-be.fcs.ninja/api/auth/random-prize', {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+            if (!prizeResp.ok) return
+            const prizeData = await prizeResp.json()
+            setPrize(prizeData)
+          } catch (err) {
+            console.log(err)
+            alert('Lỗi hoặc là  cháu đã nhận lì xì rồi tham vừa thôi nhé')
+          }
+        }}>Nhận lì xì</Button>
       </div>
-      <div>
-        <h3 style={{textAlign: 'center'}}>Cháu được: </h3>
-      </div>
-      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <Image src='/1k.jpeg' preview={false}/>
-      </div>
+      {
+        prize && (
+          <>
+            <div>
+              <h3 style={{textAlign: 'center'}}>Chúc mừng cháu được: </h3>
+            </div>
+            <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+              <Image src={`${prize}.jpeg`} preview={false}/>
+            </div>
+          </>
+        )
+      }
       <h3 style={{textAlign: 'center'}}>Các cháu khác: </h3>
       <Table
         columns={columns}
