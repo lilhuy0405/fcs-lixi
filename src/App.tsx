@@ -103,10 +103,10 @@ function App() {
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
         <Button type='primary' size='large' onClick={async () => {
           try {
-            // if (timeToMidnight.times > 0) {
-            //   toast.error('Chưa đến thời gian nhận lì xì nhé')
-            //   return
-            // }
+            if (timeToMidnight.times > 0) {
+              toast.error('Chưa đến thời gian nhận lì xì nhé')
+              return
+            }
             const token = window.localStorage.getItem('token')
             if (!token) return
             const prizeResp = await fetch('https://lixi-be.fcs.ninja/api/auth/random-prize', {
